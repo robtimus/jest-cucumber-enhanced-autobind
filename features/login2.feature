@@ -1,11 +1,6 @@
 Feature: Logging in 2
 
-Scenario: Entering a previously set correct password
-    Given I have previously created a password
-    When I enter my password correctly
-    Then I should be granted access
-
-Scenario: Entering a specific correct password
+Scenario: Entering a correct password
     Given My password = "5678"
     When I enter password "5678"
     Then I should be granted access

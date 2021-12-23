@@ -30,67 +30,56 @@ function collectSteps(scopedSteps: StepRegistration[], stepDefinitions: StepDefi
   });
 }
 
-export abstract class JestCucumberExecutor {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  beforeFeature(feature: ParsedFeature): void {
-    // Do nothing by default
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  afterFeature(feature: ParsedFeature): void {
-    // Do nothing by default
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  beforeScenario(feature: ParsedFeature): void {
-    // Do nothing by default
-    // Note that scenarios are not available
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  afterScenario(feature: ParsedFeature): void {
-    // Do nothing by default
-    // Note that scenarios are not available
-  }
-  abstract stepDefinitions(): StepDefinitions[];
+const globalSteps: StepRegistration[] = [];
 
-  execute(features: ParsedFeature[]): void {
-    const steps: StepRegistration[] = [];
-    collectSteps(steps, this.stepDefinitions());
+export interface AutoBindStepOptions {
+  beforeFeature?: (feature: ParsedFeature) => void;
+  afterFeature?: (feature: ParsedFeature) => void;
+  beforeScenario?: (feature: ParsedFeature) => void;
+  afterScenario?: (feature: ParsedFeature) => void;
+  scope?: "global" | "local";
+}
 
-    const errors: string[] = [];
+export const autoBindSteps = (features: ParsedFeature[], stepDefinitions: StepDefinitions[], options?: AutoBindStepOptions) => {
+  const scopedSteps = options?.scope === "global" ? globalSteps : [];
+  collectSteps(scopedSteps, stepDefinitions);
 
-    features.forEach((feature) => {
-      defineFeature(feature, (test) => {
-        beforeAll(() => this.beforeFeature(feature));
-        afterAll(() => this.afterFeature(feature));
-        beforeEach(() => this.beforeScenario(feature));
-        afterEach(() => this.afterScenario(feature));
+  const errors: string[] = [];
 
-        const scenarioOutlineScenarios = feature.scenarioOutlines.map((scenarioOutline) => scenarioOutline.scenarios[0]);
-        const scenarios = [...feature.scenarios, ...scenarioOutlineScenarios];
+  features.forEach((feature) => {
+    defineFeature(feature, (test) => {
+      beforeAll(() => options?.beforeFeature && options.beforeFeature(feature));
+      afterAll(() => options?.afterFeature && options.afterFeature(feature));
+      beforeEach(() => options?.beforeScenario && options.beforeScenario(feature));
+      afterEach(() => options?.afterScenario && options.afterScenario(feature));
 
-        scenarios.forEach((scenario) => {
-          test(scenario.title, (options) => {
-            scenario.steps.forEach((step, stepIndex) => {
-              const matches = steps.filter((executorStep) => matchSteps(step.stepText, executorStep.stepMatcher));
+      const scenarioOutlineScenarios = feature.scenarioOutlines.map((scenarioOutline) => scenarioOutline.scenarios[0]);
+      const scenarios = [...feature.scenarios, ...scenarioOutlineScenarios];
 
-              if (matches.length === 1) {
-                const match = matches[0];
-                options.defineStep(match.stepMatcher, match.stepFunction);
-              } else if (matches.length === 0) {
-                const stepCode = generateStepCode(scenario.steps, stepIndex, false);
-                // tslint:disable-next-line:max-line-length
-                errors.push(`No matching step found for step "${step.stepText}" in scenario "${scenario.title}" in feature "${feature.title}". Please add the following step code: \n\n${stepCode}`);
-              } else {
-                const matchingCode = matches.map((match) => `${match.stepMatcher.toString()}\n\n${match.stepFunction.toString()}`);
-                errors.push(`${matches.length} step definition matches were found for step "${step.stepText}" in scenario "${scenario.title}" in feature "${feature.title}". Each step can only have one matching step definition. The following step definition matches were found:\n\n${matchingCode.join("\n\n")}`);
-              }
-            });
+      scenarios.forEach((scenario) => {
+        test(scenario.title, (options) => {
+          scenario.steps.forEach((step, stepIndex) => {
+            const matches = scopedSteps.filter((scopedStep) => matchSteps(step.stepText, scopedStep.stepMatcher));
+
+            if (matches.length === 1) {
+              const match = matches[0];
+
+              options.defineStep(match.stepMatcher, match.stepFunction);
+            } else if (matches.length === 0) {
+              const stepCode = generateStepCode(scenario.steps, stepIndex, false);
+              // tslint:disable-next-line:max-line-length
+              errors.push(`No matching step found for step "${step.stepText}" in scenario "${scenario.title}" in feature "${feature.title}". Please add the following step code: \n\n${stepCode}`);
+            } else {
+              const matchingCode = matches.map((match) => `${match.stepMatcher.toString()}\n\n${match.stepFunction.toString()}`);
+              errors.push(`${matches.length} step definition matches were found for step "${step.stepText}" in scenario "${scenario.title}" in feature "${feature.title}". Each step can only have one matching step definition. The following step definition matches were found:\n\n${matchingCode.join("\n\n")}`);
+            }
           });
         });
       });
     });
+  });
 
-    if (errors.length) {
-      throw new Error(errors.join("\n\n"));
-    }
+  if (errors.length) {
+    throw new Error(errors.join("\n\n"));
   }
-}
+};

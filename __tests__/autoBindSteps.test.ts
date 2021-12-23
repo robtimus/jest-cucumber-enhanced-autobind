@@ -1,9 +1,9 @@
 import { loadFeatures, StepDefinitions } from "jest-cucumber";
 import { ParsedFeature } from "jest-cucumber/dist/src/models";
-import { JestCucumberExecutor } from "../src";
+import { autoBindSteps } from "../src";
 
 // Based on https://github.com/bencompton/jest-cucumber/blob/master/examples/ecmascript/specs/step-definitions/basic-scenarios.steps.js
-class LoginExecutor extends JestCucumberExecutor {
+class LoginExecutor {
   private password = "1234";
   private accessGranted = false;
 
@@ -21,12 +21,12 @@ class LoginExecutor extends JestCucumberExecutor {
   private readonly scenariosPerFeature: { [feature: string]: number };
 
   constructor(features: ParsedFeature[]) {
-    super();
     this.expectedFeatureCount = features.length;
     this.expectedFeaturesExecuted = features.map((feature) => feature.title);
     this.scenariosPerFeature = {};
     features.forEach((feature) => (this.scenariosPerFeature[feature.title] = feature.scenarios.length));
   }
+
   afterFeatures(): void {
     expect(this.activeFeatureCount).toBe(0);
     expect(this.completedFeatureCount).toBe(this.expectedFeatureCount);
@@ -96,9 +96,34 @@ class LoginExecutor extends JestCucumberExecutor {
 
 const features = loadFeatures("features/**/*.feature");
 
-const executor = new LoginExecutor(features);
-afterAll(() => executor.afterFeatures());
+describe("autoBindSteps", () => {
+  describe("without options", () => {
+    const executor = new LoginExecutor(features);
+    autoBindSteps(features, executor.stepDefinitions());
+  });
+  describe("with callbacks", () => {
+    const executor = new LoginExecutor(features);
+    afterAll(() => executor.afterFeatures());
 
-describe("JestCucumberExecutor", () => {
-  executor.execute(features);
+    autoBindSteps(features, executor.stepDefinitions(), {
+      beforeFeature: executor.beforeFeature.bind(executor),
+      afterFeature: executor.afterFeature.bind(executor),
+      beforeScenario: executor.beforeScenario.bind(executor),
+      afterScenario: executor.afterScenario.bind(executor),
+    });
+  });
+  describe("without callbacks", () => {
+    describe("with global scope", () => {
+      const executor = new LoginExecutor(features);
+      autoBindSteps(features, executor.stepDefinitions(), {
+        scope: "global",
+      });
+    });
+    describe("with local scope", () => {
+      const executor = new LoginExecutor(features);
+      autoBindSteps(features, executor.stepDefinitions(), {
+        scope: "local",
+      });
+    });
+  });
 });

@@ -1,10 +1,10 @@
 {
-  "name": "jest-cucumber-executor",
+  "name": "jest-cucumber-enhanced-autobind",
   "version": "0.1.0",
-  "description": "A replacement for jest-cucumber's autoBindSteps that provides jest hooks",
-  "homepage": "https://github.com/robtimus/jest-cucumber-executor",
+  "description": "A replacement for jest-cucumber's autoBindSteps that allows more configuration options",
+  "homepage": "https://github.com/robtimus/jest-cucumber-enhanced-autobind",
   "bugs": {
-    "url": "https://github.com/robtimus/jest-cucumber-executor/issues"
+    "url": "https://github.com/robtimus/jest-cucumber-enhanced-autobind/issues"
   },
   "license": "Apache-2.0",
   "author": "",
@@ -15,7 +15,7 @@
   "types": "lib/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robtimus/jest-cucumber-executor.git"
+    "url": "https://github.com/robtimus/jest-cucumber-enhanced-autobind.git"
   },
   "scripts": {
     "compile": "tsc",
