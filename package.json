@@ -7,12 +7,12 @@
     "url": "https://github.com/robtimus/jest-cucumber-enhanced-autobind/issues"
   },
   "license": "Apache-2.0",
-  "author": "",
+  "author": "Rob Spoor",
   "files": [
     "lib"
   ],
   "main": "lib/index.js",
-  "types": "lib/index.ts",
+  "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/robtimus/jest-cucumber-enhanced-autobind.git"
