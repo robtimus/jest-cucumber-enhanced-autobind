@@ -1,6 +1,6 @@
 {
   "name": "jest-cucumber-enhanced-autobind",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A replacement for jest-cucumber's autoBindSteps that allows more configuration options",
   "homepage": "https://github.com/robtimus/jest-cucumber-enhanced-autobind",
   "bugs": {
